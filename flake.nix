@@ -19,11 +19,34 @@
       ];
 
       perSystem = { pkgs, ... }: {
-        packages.default = pkgs.runCommand "product-sans" {} ''
-          mkdir -p $out/share/fonts
-          mkdir -p $out/share/fonts/truetype
-          find -name \*.ttf -exec mv {} $out/share/fonts/truetype/ \;
-        '';
+        packages =
+          let
+            makeFont =
+              name: src:
+              pkgs.stdenv.mkDerivation {
+                inherit name src;
+                version = "0.1.0";
+
+                unpackPhase = ''
+                  echo ${src}      
+                '';
+              
+                buildInputs = [
+                  pkgs.unzip
+                ];
+
+                setSourceRoot = "sourceRoot=`pwd`";
+
+                installPhase = ''
+                  mkdir -p $out/share/fonts
+                  mkdir -p $out/share/fonts/truetype
+                  find ${src} -name \*.ttf -exec mv {} $out/share/fonts/truetype/ \;
+                '';
+              };
+          in
+          {
+            default = makeFont "product-sans" (inputs.product-sans-source);
+          };
       };
    };
 }
